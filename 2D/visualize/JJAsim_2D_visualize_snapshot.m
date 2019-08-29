@@ -8,12 +8,12 @@ function out = JJAsim_2D_visualize_snapshot(array,n,I,varargin)
 % - Vortices are displayed as circles.
 % - Currents and vortices can be displayed with a 'normal' or 'fancy' draw mode. Normal 
 %   is more efficient. Set with arrowType and vortexType.
-% - Optionally one can display island quantities with colored islands. Can for example be
-%   used to display island phases or island potential. 
+% - Optionally one can display node quantities with colored nodes. Can for example be
+%   used to display node phases or node potential. 
 % - Optionally one can display path quantities with colored path area. Can for example be
 %   used to display path currents or self fields.
-% - Optionally one can display the islands in which external current is injected and ejected
-%   with showIExtBaseQ. Injected islands get a dot and ejection islands get a cross.
+% - Optionally one can display the nodes in which external current is injected and ejected
+%   with showIExtBaseQ. Injected nodes get a dot and ejection nodes get a cross.
 %
 %FIXED INPUT
 % array               struct      information about Josephson junction array.
@@ -40,15 +40,15 @@ function out = JJAsim_2D_visualize_snapshot(array,n,I,varargin)
 % arrowLength         1 by 1      length scale factor of current arrays.
 % arrowColor          1 by 3      RGB triplet for arrow color  
 % arrowType           string      'normal' or 'fancy'. Draw mode for current arrows.
-% showIslandsQ        1 by 1      If true, islands are shown as circles.
-% islandDiameter      1 by 1      Diameter of displayed islands.
-% islandColor         1 by 3      RGB triplet for color of islands 
+% showIslandsQ        1 by 1      If true, nodes are shown as circles.
+% nodeDiameter        1 by 1      Diameter of displayed nodes.
+% nodeColor           1 by 3      RGB triplet for color of nodes 
 %                                 (ignored if showIslandQuantityQ)
-% showIslandQuantityQ 1 by 1      if true, islandQuantity is displayed with colored islands.
-% islandQuantity      Nis by 1    quantity displayed with colored islands.   
-% islandColorLimits   empty       automatic color limits for islandQuantity
-%                     1 by 2      manual color limits for islandQuantity
-% islandQuantityLabel string      Colorbar label for islandQuantity  
+% showIslandQuantityQ 1 by 1      if true, nodeQuantity is displayed with colored nodes.
+% nodeQuantity        Nn by 1     quantity displayed with colored nodes.   
+% nodeColorLimits     empty       automatic color limits for nodeQuantity
+%                     1 by 2      manual color limits for nodeQuantity
+% nodeQuantityLabel   string      Colorbar label for nodeQuantity  
 % showPathQuantityQ   1 by 1      if true, pathQuantity is displayed by coloring the 
 %                                 enclosed area of each path.
 % pathQuantity        Np by 1     quantity displayed with colored path areas.   
@@ -56,7 +56,7 @@ function out = JJAsim_2D_visualize_snapshot(array,n,I,varargin)
 %                     1 by 2      manual color limits for pathQuantity
 % pathQuantityLabel   string      Colorbar label for pathQuantity    
 % pathQuantityAlpha   1 by 1      Transparancy of colored path areas.  
-% showIExtBaseQ       1 by 1      Dispay the islands where external current is in/ejected.  
+% showIExtBaseQ       1 by 1      Dispay the nodes where external current is in/ejected.  
 % IExtBaseColor       1 by 3      RGB color triplet for symbols displaying external current.
 % 
 %OUTPUT
@@ -87,13 +87,13 @@ inputParameters = {
     'arrowLength'               1
     'arrowColor'                [0,0,1]
     'arrowType'                 'fancy'
-    'showIslandsQ'              true
-    'islandDiameter'            0.3
-    'islandColor'               [1,1,1]
-    'showIslandQuantityQ'       false
-    'islandQuantity'            []
-    'islandColorLimits'         []
-    'islandQuantityLabel'       ''
+    'showNodesQ'                true
+    'nodeDiameter'              0.3
+    'nodeColor'                 [1,1,1]
+    'showNodeQuantityQ'         false
+    'nodeQuantity'              []
+    'nodeColorLimits'           []
+    'nodeQuantityLabel'         ''
     'showPathQuantityQ'         false
     'pathQuantity'              []
     'pathColorLimits'           []
@@ -121,13 +121,13 @@ arrowWidth = options.arrowWidth;
 arrowLength = options.arrowLength;
 arrowColor = options.arrowColor;
 arrowType = options.arrowType;
-showIslandsQ = options.showIslandsQ;
-islandDiameter = options.islandDiameter;
-islandColor = options.islandColor;
-showIslandQuantityQ = options.showIslandQuantityQ;
-islandQuantity = options.islandQuantity;
-islandColorLimits = options.islandColorLimits;
-islandQuantityLabel = options.islandQuantityLabel;
+showNodesQ = options.showNodesQ;
+nodeDiameter = options.nodeDiameter;
+nodeColor = options.nodeColor;
+showNodeQuantityQ = options.showNodeQuantityQ;
+nodeQuantity = options.nodeQuantity;
+nodeColorLimits = options.nodeColorLimits;
+nodeQuantityLabel = options.nodeQuantityLabel;
 showPathQuantityQ = options.showPathQuantityQ;
 pathQuantity = options.pathQuantity;
 pathColorLimits = options.pathColorLimits;
@@ -139,18 +139,18 @@ IExtBaseColor = options.IExtBaseColor;
 if showIExtBaseQ && isfield(array,'IExtBase') == false
     error('Cannot display IExtBase because array does not contain the field IExtBase');
 end
-if showIslandQuantityQ && showPathQuantityQ
-    error('cannot simultaneously display an island quantity and a path quantity'); 
+if showNodeQuantityQ && showPathQuantityQ
+    error('cannot simultaneously display an node quantity and a path quantity'); 
 end
 
 
 %prepare input
-islandPosition = reshape(array.islandPosition,[],2);
+nodePosition = reshape(array.nodePosition,[],2);
 junctionPosition = reshape(array.junctionPosition,[],4);
 pathCentroid = reshape(array.pathCentroid,[],2);
 pathPosition = reshape(array.pathPosition,[],1);
-if showIslandQuantityQ
-    islandQuantity = reshape(islandQuantity,[],1);
+if showNodeQuantityQ
+    nodeQuantity = reshape(nodeQuantity,[],1);
 end
 if showPathQuantityQ
     pathQuantity = reshape(pathQuantity,[],1);
@@ -164,12 +164,12 @@ n = reshape(n,[],1);
 I = reshape(I,[],1);
 n = JJAsim_method_checkInput(n,'double',array.Np,0,'n');
 I = JJAsim_method_checkInput(I,'double',array.Nj,0,'I');
-if showIslandQuantityQ
-    islandQuantity = JJAsim_method_checkInput(islandQuantity,'double',...
-        array.Nis,0,'islandQuantity');
-    if ~isempty(islandColorLimits)
-        islandColorLimits = JJAsim_method_checkInput(islandColorLimits,'double',...
-            [1,2],[1,0],'islandColorLimits');
+if showNodeQuantityQ
+    nodeQuantity = JJAsim_method_checkInput(nodeQuantity,'double',...
+        array.Nn,0,'nodeQuantity');
+    if ~isempty(nodeColorLimits)
+        nodeColorLimits = JJAsim_method_checkInput(nodeColorLimits,'double',...
+            [1,2],[1,0],'nodeColorLimits');
     end
 end
 if showPathQuantityQ
@@ -182,19 +182,19 @@ if showPathQuantityQ
 end
 
 %produce snapshot
-[fh,ah,cb] = JJAsim_priv_snap_2D(islandPosition,junctionPosition,pathCentroid,pathPosition,n,...
+[fh,ah,cb] = JJAsim_priv_snap_2D(nodePosition,junctionPosition,pathCentroid,pathPosition,n,...
     I,figurePosition,fontSize,fontName,showVorticesQ,vortexDiameter,vortexColor,...
     antiVortexColor,vortexType,showGridQ,gridWidth,gridColor,showCurrentQ,arrowWidth,...
     arrowLength,arrowColor,arrowType,...
-    showIslandsQ,islandDiameter,islandColor,showIslandQuantityQ,islandQuantity,...
-    islandColorLimits,islandQuantityLabel,showPathQuantityQ,pathQuantity,...
+    showNodesQ,nodeDiameter,nodeColor,showNodeQuantityQ,nodeQuantity,...
+    nodeColorLimits,nodeQuantityLabel,showPathQuantityQ,pathQuantity,...
     pathColorLimits,pathQuantityLabel,pathQuantityAlpha,showIExtBaseQ,IExtBase,...
     IExtBaseColor);
 
 %assign output plot handles
 out.figureHandle = fh;
 out.axisHandle = ah;
-if ~isempty(islandQuantity)
+if ~isempty(nodeQuantity)
     out.colorbarHandle = cb;
 end
 end

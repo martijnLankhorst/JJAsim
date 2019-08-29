@@ -8,10 +8,13 @@ function JJAsim_2D_visualize_circuit(array,varargin)
 %   external current is ejected are displayed with a cross.
 %
 %VARIABLE INPUT
+% showQuantitiesQ   1 by 1      If true, Rn, Ic, betaC and IExtBase are visualized.
+% FontSize          1 by 1      Font size
+% textColor         1 by 3      RGB triplet for text color.
 % lineWidth         1 by 1      Width of all lines (in pixels)
-% islandDiameter    1 by 1      Diameter of islands (circuit nodes)
+% nodeDiameter      1 by 1      Diameter of nodes (circuit nodes)
 % JLength           1 by 1      Length of all junctions (as a fraction of its wire)
-% JWidth           1 by 1       Width of all junctions (as a fraction of its wire)
+% JWidth            1 by 1      Width of all junctions (as a fraction of its wire)
 % RWidth            1 by 1      Resistor is rectangle with this width (fraction of wire)
 % RLength           1 by 1      ... and this length (fraction of wire)
 % JEsize            1 by 1      Width of Josephson element as a fraction of wire
@@ -20,8 +23,11 @@ function JJAsim_2D_visualize_circuit(array,varargin)
     
 %import optional property-value pairs
 inputParameters = {
+    'showQuantitiesQ'   true
+    'FontSize'          18
+    'textColor'         [0.05,0.5,1]
     'lineWidth'         1.5
-    'islandDiameter'    0.16
+    'nodeDiameter'      0.16
     'JLength'           0.42
     'JWidth'            0.14
     'RWidth'            0.08
@@ -32,8 +38,11 @@ inputParameters = {
     };
 options = JJAsim_method_parseOptions(inputParameters,varargin,mfilename);
 
+showQuantities = options.showQuantitiesQ;
+FontSize = options.FontSize;
+textColor = options.textColor;
 lineWidth = options.lineWidth;
-islandDiameter = options.islandDiameter;
+nodeDiameter = options.nodeDiameter;
 JLength = options.JLength;
 JWidth = options.JWidth;
 RWidth = options.RWidth;
@@ -42,7 +51,7 @@ JEsize = options.JEsize;
 CGap = options.CGap;
 CWidth = options.CWidth;
 
-is = array.islandPosition;
+is = array.nodePosition;
 j1 = array.junctionIsland1;
 j2 = array.junctionIsland2;
 Nj = array.Nj;
@@ -81,12 +90,12 @@ for i = 1:Nj
 end
 
 angle = linspace(0,2*pi,20);
-cx = cos(angle)*islandDiameter/2;
-cy = sin(angle)*islandDiameter/2;
-cross1 = [-1,1]*islandDiameter/4;
-cross2 = [1,-1]*islandDiameter/4;
+cx = cos(angle)*nodeDiameter/2;
+cy = sin(angle)*nodeDiameter/2;
+cross1 = [-1,1]*nodeDiameter/4;
+cross2 = [1,-1]*nodeDiameter/4;
 
-%draw islands
+%draw nodes
 plot((cx + is(:,1))',(cy+is(:,2))','LineWidth',lineWidth,'Color',[0,0,0]);
 hold on;
 ind = array.IExtBase > 0;
@@ -94,7 +103,13 @@ plot((cx/3 + is(ind,1))',(cy/3 + is(ind,2))','LineWidth',lineWidth,'Color',[0,0,
 ind = array.IExtBase < 0;
 plot((cross1 + is(ind,1))',(cross1 + is(ind,2))','LineWidth',lineWidth,'Color',[0,0,0]);
 plot((cross1 + is(ind,1))',(cross2 + is(ind,2))','LineWidth',lineWidth,'Color',[0,0,0]);
-
+if showQuantities
+    for i = 1:length(ind)
+        if array.IExtBase(i) ~= 0
+            text(is(i,1),is(i,2),['$',num2str(abs(array.IExtBase(i))),'$'],'Interpreter','latex','FontSize',FontSize,'Color',textColor,'HorizontalAlignment','center')
+        end
+    end
+end
 L1 = zeros(2,20*Nj);
 L2 = zeros(2,20*Nj);
 S1 = zeros(2,2*Nj);
@@ -113,8 +128,8 @@ for i = 1:Nj
     L = sqrt((r1(1)-r2(1))^2 + (r1(2)-r2(2))^2);
     khat = 1/L*[r2(1)-r1(1);r2(2)-r1(2)];
     jhat = 1/L*[r1(2)-r2(2);r2(1)-r1(1)];
-    r1 = r1 + islandDiameter/2*khat;
-    r2 = r2 - islandDiameter/2*khat;
+    r1 = r1 + nodeDiameter/2*khat;
+    r2 = r2 - nodeDiameter/2*khat;
     for j = 1:Ne
         
         p = c - JLength/2*khat + ((Ne+1)/2 - j)*JWidth*jhat;
@@ -172,6 +187,46 @@ ah.DataAspectRatio = [1,1,1];
 ah.PlotBoxAspectRatio = [1,1,1];
 fh = gcf;
 fh.Color = [1,1,1];
+
+%display quantities
+if showQuantities
+    for i = 1:Nj
+        Ne = nrOfElements(i);
+        r1 = is(j1(i),:)';
+        r2 = is(j2(i),:)';
+        c = (r1 + r2)/2;
+        L = sqrt((r1(1)-r2(1))^2 + (r1(2)-r2(2))^2);
+        jhat = 1/L*[r1(2)-r2(2);r2(1)-r1(1)];
+        for j = 1:Ne
+            p = c + ((Ne+1)/2 - j)*JWidth*jhat;
+            switch elements{i}(j)
+                case 1
+                    if length(array.Rn) == 1
+                        Rdisp = array.Rn;
+                    else
+                        Rdisp = array.Rn(i);
+                    end
+                    text(p(1),p(2),['$',num2str(Rdisp),'$'],'Interpreter','latex','FontSize',FontSize,'Color',textColor,'HorizontalAlignment','center')
+                case 2
+                    if length(array.Ic) == 1
+                        Icdisp = array.Ic;
+                    else
+                        Icdisp = array.Ic(i);
+                    end
+                    text(p(1),p(2),['$',num2str(Icdisp),'$'],'Interpreter','latex','FontSize',FontSize,'Color',textColor,'HorizontalAlignment','center')
+                    
+                case 3
+                    if length(array.betaC) == 1
+                        Cdisp = array.betaC;
+                    else
+                        Cdisp = array.betaC(i);
+                    end
+                    text(p(1),p(2),['$',num2str(Cdisp),'$'],'Interpreter','latex','FontSize',FontSize,'Color',textColor,'HorizontalAlignment','center')
+            end
+        end
+        
+    end
+end  
 end
 
 function [L1,L2] = getJE(r1,r2,sz,khat,jhat)
