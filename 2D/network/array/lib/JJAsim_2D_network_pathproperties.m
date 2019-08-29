@@ -1,11 +1,11 @@
 function  [pNodes,pDir] = JJAsim_2D_network_pathproperties(junctionIslands)
-%extracts ordered nodes and junction directions of a path defined by juncion islands.
+%extracts ordered nodes and junction directions of a path defined by juncion nodes.
 %
 %input: 
 %junctionIslands  Nj by 2  Islands corresponding to the Nj junctions in a single path.
 %
 %output: 
-%pNodes           Nj by 1  list of islands in the path, in order.
+%pNodes           Nj by 1  list of nodes in the path, in order.
 %pDir             Nj by 1  direction of each junction with respect to the path. (value +1 or -1).
 %
 Nj = size(junctionIslands,1);
