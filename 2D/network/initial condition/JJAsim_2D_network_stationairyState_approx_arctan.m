@@ -63,10 +63,10 @@ M = array.M;
 A = array.A;
 
 %get phi
-phi = zeros(array.Nis,size(x0,2));
+phi = zeros(array.Nn,size(x0,2));
 for i = 1:L
-   x = array.islandPosition(:,1);
-   y = array.islandPosition(:,2);
+   x = array.nodePosition(:,1);
+   y = array.nodePosition(:,2);
    phi = phi + n0(i,:).*atan2(y-y0(i,:),x-x0(i,:));
 end
 

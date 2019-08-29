@@ -46,7 +46,7 @@ if array.inductanceQ
 else
     for w = 1:W
         J = -M'*JJAsim_2D_network_method_CSolve(array.M*diag(dth(:,w)),array.CComponentsReduced,...
-        array.islandComponents,array.nrOfComponents);
+        array.nodeComponents,array.nrOfComponents);
         eigv(:,w) = real(eig(J));
         stableQ(w) = max(eigv(:,w),[],1) < 1E-8;
     end
