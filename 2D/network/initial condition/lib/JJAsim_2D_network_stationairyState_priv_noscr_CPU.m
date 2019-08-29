@@ -1,14 +1,14 @@
-function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
-    JJAsim_2D_network_stationairyState_priv_noscr_CPU(Nis,Nj,Np,M,A,...
-    W,IExtBaseJ,pathArea,areaCompact,IExt,IExtprob,WIExt,f,fCompact,fprob,Wf,n,nCompact,...
-    nprob,Wn,z,zCompact,zprob,Wz,ic,icprob,Wic,Ic,IcCompact,cpQ,cp,dcp,icp,...
-    storeThQ,storeIQ,storeEQ,newton_steps,newton_tol) %#ok<*INUSL>
+function [thOut,nOut,IOut,EOut,solutionQ,nrOfSteps] = ...
+    JJAsim_2D_network_stationairyState_priv_noscr_CPU(Nn,Nj,Np,M,A,...
+    W,IExtBaseJ,pathArea,areaCompact,IExt,IExtprob,WIExt,f,fCompact,fprob,Wf,...
+    z,zCompact,zprob,Wz,ic,icprob,Wic,Ic,IcCompact,cpQ,cp,dcp,icp,...
+    storeThQ,storenQ,storeIQ,storeEQ,newton_steps,newton_tol) %#ok<*INUSL>
 
 %input:
-% Nis               1 by 1            	number of islands
+% Nn               1 by 1            	number of nodes
 % Nj                1 by 1            	number of junctions
 % Np                1 by 1             	number of paths
-% M                 Nis by Nj        	Kirchhoffs current rules
+% M                 Nn by Nj        	Kirchhoffs current rules
 % A                 Np by Nj           	Kirchhoffs voltage rules
 % W                 1 by 1            	number of parallel problems
 % IExtBaseJ         Nj by 1           	Junction external current base
@@ -22,10 +22,6 @@ function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
 % fCompact          1 by 2            	which dimensions of f are compact
 % fprob             W by 1             	List for each problem which column from f is taken
 % Wf                1 by 1             	number of columns in the f table   
-% n                 (Np or 1) by Wf    	frustration factor table
-% nCompact          1 by 2            	which dimensions of f are compact
-% nprob             W by 1             	List for each problem which column from f is taken
-% Wn                1 by 1             	number of columns in the f table   
 % z                 (Np or 1) by Wz    	phase zone table
 % zCompact          1 by 2             	which dimensions of z are compact
 % zProb             W by 1            	List for each problem which column from z is taken
@@ -40,6 +36,7 @@ function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
 % dcp               function_handle     th-derivative of custom cp relation
 % icp               function_handle     th-integral of custom cp relation
 % storeThQ          1 by 1          	if true, store th data
+% storenQ           1 by 1           	if true, store n data
 % storeIQ           1 by 1           	if true, store I data
 % storeEQ           1 by 1            	if true, store E data
 % newton_steps      1 by 1              number of steps of newton algorithm
@@ -50,7 +47,7 @@ AT = A';
 
 %get initial condition
 df = 2*pi*(z(:,zprob)-pathArea.*f(:,fprob));
-dfCompact = fCompact(1) && nCompact(1)  && areaCompact;
+dfCompact = fCompact(1) && zCompact(1)  && areaCompact;
 if dfCompact
     df = repmat(df,Np,1);
 end
@@ -99,7 +96,7 @@ while sum(problemSelection) > 0 && newtonStep <= newton_steps
     else
         notConverged = mean(abs(M*(Ic.*sin(th) - Ip)),1) > newton_tol;
     end
-    notConverged = notConverged | (mean(abs(A*th - df)) > newton_tol);
+    notConverged = notConverged | (mean(abs(A*th -A*th)) > newton_tol);
     selnp(:,problemSelection) = ~notConverged;
     thOut(:,selnp) = th(:,~notConverged);
     th = th(:,notConverged);
@@ -114,15 +111,12 @@ thOut(:,problemSelection) = th;
 %get list for which problems a solution is found. 
 solutionQ = ~problemSelection;
 
-%doublecheck if resulting vortex configuration nout is equal to the desired configuration n.
-nOut = z(:,zprob)-A*round(thOut/2/pi);
-for w = 1:W
-    if ~isequal(n(:,nprob(w)),nOut(:,w))
-        solutionQ(w) = false;
-    end
-end
-
 %assign store output variables
+if storenQ
+    nOut = z(:,zprob)-A*round(thOut/2/pi);
+else
+    nOut = [];
+end
 if storeIQ   
     if cpQ
         IOut = cp(Ic,thOut);       

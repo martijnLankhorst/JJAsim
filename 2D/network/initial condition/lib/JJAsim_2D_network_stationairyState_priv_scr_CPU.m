@@ -1,8 +1,8 @@
-function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
-    JJAsim_2D_network_stationairyState_priv_scr_CPU(Nis,Nj,Np,M,A,betaL,LMode,...
-    W,IExtBaseJ,pathArea,areaCompact,IExt,IExtprob,WIExt,f,fCompact,fprob,Wf,n,nCompact,nprob,Wn,...
+function [thOut,nOut,IOut,EOut,solutionQ,nrOfSteps] = ...
+    JJAsim_2D_network_stationairyState_priv_scr_CPU(Nn,Nj,Np,M,A,betaL,LMode,...
+    W,IExtBaseJ,pathArea,areaCompact,IExt,IExtprob,WIExt,f,fCompact,fprob,Wf,...
     z,zCompact,zprob,Wz,ic,icprob,Wic,Ic,IcCompact,cpQ,cp,dcp,icp,storethQ,...
-    storeIQ,storeEQ,newton_steps,newton_tol) %#ok<*INUSL>
+    storenQ,storeIQ,storeEQ,newton_steps,newton_tol) %#ok<*INUSL>
 %
 %using newton method aiming to solve the system f(th) = 0 with:
 %f = [
@@ -11,10 +11,10 @@ function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
 %    ];
 %
 %input:
-% Nis               1 by 1            	number of islands
+% Nn               1 by 1            	number of nodes
 % Nj                1 by 1            	number of junctions
 % Np                1 by 1             	number of paths
-% M                 Nis by Nj        	Kirchhoffs current rules
+% M                 Nn by Nj        	Kirchhoffs current rules
 % A                 Np by Nj           	Kirchhoffs voltage rules
 % betaL             1 by 1           	Inductance, if LMode = 0, uniform self inductance
 %                   or Nj by Nj                     if LMode = 1, sparse/dense inductance matrix
@@ -31,10 +31,6 @@ function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
 % fCompact          1 by 2            	which dimensions of f are compact
 % fprob             W by 1             	List for each problem which column from f is taken
 % Wf                1 by 1             	number of columns in the f table   
-% n                 (Np or 1) by Wf    	frustration factor table
-% nCompact          1 by 2            	which dimensions of f are compact
-% nprob             W by 1             	List for each problem which column from f is taken
-% Wn                1 by 1             	number of columns in the f table   
 % z                 (Np or 1) by Wz    	phase zone table
 % zCompact          1 by 2             	which dimensions of z are compact
 % zProb             W by 1            	List for each problem which column from z is taken
@@ -45,6 +41,7 @@ function [thOut,IOut,EOut,solutionQ,nrOfSteps] = ...
 % Ic                (Nj or 1) by 1     	critical current values
 % IcCompact         1 by 1             	which dimensions of Ic are compact  
 % storethQ          1 by 1          	if true, store th data
+% storenQ           1 by 1           	if true, store n data
 % storeIQ           1 by 1           	if true, store I data
 % storeEQ           1 by 1            	if true, store EJtot data
 % newton_steps      1 by 1              number of steps of newton algorithm
@@ -55,7 +52,7 @@ AT = A';
 
 %get initial condition
 df = 2*pi*(z(:,zprob)-pathArea.*f(:,fprob));
-dfCompact = fCompact(1) && nCompact(1)  && areaCompact;
+dfCompact = fCompact(1) && zCompact(1)  && areaCompact;
 if dfCompact
     df = repmat(df,Np,1);
 end
@@ -122,14 +119,6 @@ thOut(:,problemSelection) = th;
 %get list for which problems a solution is found. 
 solutionQ = ~problemSelection;
 
-%doublecheck if resulting vortex configuration nout is equal to the desired configuration n.
-nOut = z(:,zprob)-A*round(thOut/2/pi);
-for w = 1:W
-    if ~isequal(n(:,nprob(w)),nOut(:,w))
-        solutionQ(w) = false;
-    end
-end
-
 %compute junction current if necessary
 if storeIQ || storeEQ
     if cpQ
@@ -137,6 +126,13 @@ if storeIQ || storeEQ
     else
         I = Ic.*sin(thOut);
     end
+end
+
+%store vortex configuration
+if storenQ
+    nOut = z(:,zprob)-A*round(thOut/2/pi);
+else
+    nOut = []; 
 end
 
 %store junction current
