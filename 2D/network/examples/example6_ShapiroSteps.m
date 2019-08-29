@@ -2,8 +2,8 @@ close all;
 % - magnetoresistance curves for several bias currents
 
 %array size
-Nx = 20;                
-Ny = 20;
+Nx = 21;                
+Ny = 21;
 
 %create square array
 array = JJAsim_2D_network_square(Nx,Ny);
@@ -13,7 +13,7 @@ t = (0:0.1:300)';
 Nt = length(t);
 
 %bias current components
-freq = 0.2;
+freq = 0.25;
 Amp1 = 0.5;
 Amp2 = 1;
 IDC = linspace(0,2,201)';
@@ -34,12 +34,15 @@ out = JJAsim_2D_network_simulate(array,t,inputMode,IExt,T,f,z,th1,'storethQ',fal
     'storeIQ',false);
 
 %compute array resistance
-V = mean(out.Vtot(:,round(Nt/3):end),2)/(Nx-1);
+V = mean(out.Vtot(:,round(Nt/3):end),2);
 V = reshape(V,length(IDC),2);
 
 %plot IV curve
 plot(IDC,V,'LineWidth',1.5)
-xlabel('I')
-ylabel('V')
-legend({['Amplitude = ',num2str(Amp1)],['Amplitude = ',num2str(Amp2)]},'Location','NorthWest')
-
+ah = gca;
+ah.Box = 'on';
+ah.LineWidth = 1.5;
+xlabel('$I$','Interpreter','latex','FontSize',13)
+ylabel('$V$','Interpreter','latex','FontSize',13)
+legend({['Amplitude = ',num2str(Amp1)],['Amplitude = ',num2str(Amp2)]},'Location','NorthWest','Interpreter','latex','FontSize',13)
+ah.FontSize = 15;

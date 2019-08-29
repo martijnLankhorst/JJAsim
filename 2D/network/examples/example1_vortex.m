@@ -1,5 +1,6 @@
 close all; 
-% - this example shows how to compute a stationairy single vortex state in a square array.
+% - this example shows how to compute a stationairy single vortex state in  
+%   a square array.
 % - It does this in an array with and without an inductance parameter. 
 
 %array size
@@ -15,10 +16,11 @@ n = 1;                  %n is the vorticity of the placed vortex
 
 %other parameters
 f = 0;                  %frustration factor
-inputMode = 'sweep';    %input mode (only relevant if computing multiple problems in one function call)
+inputMode = 'sweep';    %input mode (only relevant if computing multiple problems)
 IExtDirection = 'x';    %external current direction, either 'x' or 'y'
 IExt = 0;               %External current
-betaLList = [0,3];      %inductance parameter. Each junction has a self inductance of L = betaL*Phi0/(2*pi*I0)
+betaLList = [0,3];      %inductance parameter. Each junction has a self inductance 
+                        % of L = betaL*Phi0/(2*pi*I0)
 
 %compute stationairy states
 for i = 1:2
@@ -28,13 +30,13 @@ for i = 1:2
     array = JJAsim_2D_network_square(Nx,Ny,ax,ay,IExtDirection,'betaL',betaL);
     
     %make initial guess
-    [th,I,nVector] = JJAsim_2D_network_stationairyState_approx_arctan(array,x_n,y_n,n,f);
+    [th,I] = JJAsim_2D_network_stationairyState_approx_arctan(array,x_n,y_n,n,f);
     z = 0; %When using approx_arctan, the phase zone z must be zero.
     
     %compute exact stationairy state 
-    out = JJAsim_2D_network_stationairyState(array1,inputMode,IExt,f,nVector,z,th);
+    out = JJAsim_2D_network_stationairyState(array,inputMode,IExt,f,z,th);
     
-    %check vortex configuration of stationairy state (should be same as input)
+    %vortex configuration of stationairy state
     nOut = JJAsim_2D_network_method_getn(array,out.th,z);
     
     %compute island phases
@@ -47,7 +49,9 @@ for i = 1:2
     else
         title(['inductance parameter $\beta_L = $',num2str(betaL)])
     end
-    h = JJAsim_2D_visualize_snapshot(array,nOut,out.I,'showIslandQuantityQ',true,...
-        'islandQuantity',phiOut,'islandColorLimits',[0,2*pi],'islandQuantityLabel',...
-        '$\phi$','showIExtBaseQ',false,'islandDiameter',0.35,'FontSize',20);
+    h = JJAsim_2D_visualize_snapshot(array,nOut,out.I,'showNodeQuantityQ',true,...
+        'nodeQuantity',phiOut,'nodeColorLimits',[0,2*pi],'nodeQuantityLabel',...
+        '$\phi$','showIExtBaseQ',false,'nodeDiameter',0.35,'FontSize',20,'arrowWidth',1.7);
+    h.axisHandle.XAxis.Visible = 'off';
+    h.axisHandle.YAxis.Visible = 'off';
 end

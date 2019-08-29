@@ -1,35 +1,27 @@
 close all; 
-% - this example shows the time evolution on a current-biassed disordered square array where some 
-%   islands are removed. For reference it also shows a biassed normal square array.
+% - this example shows the time evolution on a current-biassed disordered 
+%   square array where some islands are removed. For reference it also
+%   shows a biassed normal square array.
 
 %array size
-Nx = 16;                %array size
+Nx = 16;                  %array size
 Ny = 16;
+nodeRemoveFraction = 0.2; %fraction of nodes to remove
 
 %other parameters
-f = 0.2;                %frustration factor
-inputMode = 'sweep';    %input mode (only relevant if computing multiple problems in one function call)
-IExt = 0.5;             %External current
-t = (0:0.1:100)';       %time points
+f = 0.2;                  %frustration factor
+inputMode = 'sweep';      %input mode 
+IExt = 0.5;               %External current
+t = (0:0.1:100)';         %time points
 Nt = length(t);
-th1 = 0;                %initial condition
-z = 0;                  %phase zone
-T = 0;                  %temperature
+th1 = 0;                  %initial condition
+z = 0;                    %phase zone
+T = 0;                    %temperature
 
-arrayType = 'disordered';
-islandRemovePercentage = 0.2;
-
-%create square array
+%create disordered square array
 array = JJAsim_2D_network_square(Nx,Ny);
-
-%if arrayType is set to disordered, remove some islands from array
-switch arrayType
-    case 'ordered'
-        
-    case 'disordered'
-        removeIslands = find(rand(array.Nis,1) < islandRemovePercentage);
-        array = JJAsim_2D_network_removeIslands(array,removeIslands);
-end
+removeNodes = find(rand(array.Nn,1) < nodeRemoveFraction);
+array = JJAsim_2D_network_removeNodes(array,removeNodes);
 
 %time evolution
 out = JJAsim_2D_network_simulate(array,t,inputMode,IExt,T,f,z,th1);
@@ -40,11 +32,13 @@ nOut = JJAsim_2D_network_method_getn(array,out.th,z);
 %visualize annealing process
 selectedTimePoints = false(Nt,1);
 selectedTimePoints(1:2:end) = true;
-JJAsim_2D_visualize_movie(array,t,nOut,out.I,'selectedTimePoints',selectedTimePoints,'arrowWidth',0.6);
-close all;
+JJAsim_2D_visualize_movie(array,t,nOut,out.I,'selectedTimePoints',...
+    selectedTimePoints,'arrowWidth',0.6);
 
-%visualize final configuration (note, this is timestep Nt-1 because at timestep Nt one cannot
-%     obtain the current because it depends on the voltage derivative which is forward difference)
+%visualize final configuration (note, this is timestep Nt-1 because at 
+%     timestep Nt one cannot obtain the current because it depends on 
+%     the voltage derivative which is forward difference)
+figure; 
 nFinal = nOut(:,:,end-1);
 IFinal = out.I(:,:,end-1);
 JJAsim_2D_visualize_snapshot(array,nFinal,IFinal,'arrowWidth',0.6);
