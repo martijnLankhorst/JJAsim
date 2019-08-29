@@ -3,13 +3,13 @@ function array = JJAsim_2D_network_triangular(Nx,Ny,ax,ay,currentDirection,varar
 %
 %DESCRIPTION
 % generates a Nx by Ny unit cells triangular array. A unit cell contains
-% 2 islands. Inherits optional input from JJAsim_2D_network_create.
+% 2 nodes. Inherits optional input from JJAsim_2D_network_create.
 %
 %FIXED INPUT
-% Nx                1 by 1   number of islands in x-direction
-% Ny                1 by 1   number of islands in y-direction
-% ax                1 by 1   island distance in x-direction
-% ay                1 by 1   island distance in y-direction
+% Nx                1 by 1   number of nodes in x-direction
+% Ny                1 by 1   number of nodes in y-direction
+% ax                1 by 1   node distance in x-direction
+% ay                1 by 1   node distance in y-direction
 % currentDirection  string   'x' or 'y'. Sets a homogeneous external 
 %                            current in the respective  dimension.
 %                           
@@ -37,7 +37,7 @@ ynr = repmat((1:Ny),Nx,1,2);
 incellnr = repmat(shiftdim(1:2,-1),Nx,Ny,1);
 x = ((xnr-1) + shiftdim([0,0.5],-1))*ax;
 y = (ynr-1 + shiftdim([0,0.5],-1))*ay*sqrt(3);
-islandPosition = [reshape(permute(x,[3,1,2]),[],1),reshape(permute(y,[3,1,2]),[],1)];
+nodePosition = [reshape(permute(x,[3,1,2]),[],1),reshape(permute(y,[3,1,2]),[],1)];
 jc = [
     1 1 1  1 1 2
     1 1 2  1 2 1
@@ -72,5 +72,5 @@ switch currentDirection
         error('unrecognized direction');
 end
 IExtBase = reshape(permute(IExtBase,[3,1,2]),[],1);
-array = JJAsim_2D_network_create(islandPosition,[junctionIsland1,junctionIsland2],IExtBase,varargin{:});
+array = JJAsim_2D_network_create(nodePosition,[junctionIsland1,junctionIsland2],IExtBase,varargin{:});
 end

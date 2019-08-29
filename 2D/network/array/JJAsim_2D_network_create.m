@@ -1,5 +1,5 @@
-function array = JJAsim_2D_network_create(islandPosition,junctionIslands,IExtBase,varargin)
-%array = JJAsim_2D_network_create(islandPosition,junctionIslands,IExtBase,varargin)
+function array = JJAsim_2D_network_create(nodePosition,junctionIslands,IExtBase,varargin)
+%array = JJAsim_2D_network_create(nodePosition,junctionIslands,IExtBase,varargin)
 %
 %DESCRIPTION
 % - Generate an 2D electrical network of Josephson junctions with arbitrary network 
@@ -15,9 +15,9 @@ function array = JJAsim_2D_network_create(islandPosition,junctionIslands,IExtBas
 %   Realistic values can be computed with the INDUCTsim package. 
 %
 %FIXED INPUT
-% islandPosition      Nis by 2          x and y coordinates of the islands of the array
-% junctionIslands	  Nj by 2           island numbers of endpoints of each junction
-% IExtBase         	  Nis by 1          relative external current injected per island
+% nodePosition        Nn by 2           x and y coordinates of the nodes of the array
+% junctionIslands	  Nj by 2           node numbers of endpoints of each junction
+% IExtBase         	  Nn by 1           relative external current injected per node
 %
 %OPTIONAL INPUT
 % customcpQ           1 by 1            true if custom current-phase relation cp
@@ -41,31 +41,31 @@ function array = JJAsim_2D_network_create(islandPosition,junctionIslands,IExtBas
 %   boudary                   string          boundary type (set to 'free')
 %   type                      string          array type (set to 'network')
 %   ndims                     1 by 1          number of spatial dimensions (set to 2)
-%   Nis                       1 by 1          number of islands
+%   Nn                        1 by 1          number of nodes
 %   Nj                        1 by 1          number of junctions
 %   Np                        1 by 1          number of paths (circuit rank of network).
 %   N                         1 by 1          sqrt(Np)
-%   islandPosition            Nis by 2        x and y coordinates of the islands of the array
-%   junctionIsland1           Nj by 1         island numbers of the junctions dirst island    
-%   junctionIsland2           Nj by 1         island numbers of the junctions second island
+%   nodePosition              Nn by 2         x and y coordinates of the nodes of the array
+%   junctionIsland1           Nj by 1         node numbers of the junctions first node    
+%   junctionIsland2           Nj by 1         node numbers of the junctions second node
 %   junctionPosition          Nj by 4         Coordinates of endpoints of junctions, [x1,y1,x2,y2].
 %   pathArea                  Np by 1         signed area of each path. Paths have positive 
 %                                             orientation with right hand rule by convention.
 %   pathCentroid              Np by 2         centroid of each path
-%   pathPosition              Np by 1 cell    coordinates of the islands in each path. each 
-%                                             element is an Nisp by 2 array.
+%   pathPosition              Np by 1 cell    coordinates of the nodes in each path. each 
+%                                             element is an Np by 2 array.
 %   networkGraph              matlab graph    mathematical graph representation of the network
 %   nrOfConnectedComponents   1 by 1          Abbrieviated Nc, number of connected components.          
-%   M                         Nis by Nj       Kirchhoffs current rules
-%   Mreduced                  Nis-1 by Nj     M with last row removed, the rows are linearly independent  
+%   M                         Nn by Nj        Kirchhoffs current rules
+%   Mreduced                  Nn-1 by Nj      M with last row removed, the rows are linearly independent  
 %   A                         Np by Nj        cycle (row) space or Kirchhoff's voltage rules.
-%   islandComponents          Nis by 1        (if Nc>1) to which component each island belongs    
+%   nodeComponents            Nn by 1         (if Nc>1) to which component each node belongs    
 %   junctionComponents        Nj by 1         (if Nc>1) to which component each junction belongs 
 %   pathComponents            Np by 1         (if Nc>1) to which component each path belongs
 %   networkGraphComponents    Nc by 1 cell    (if Nc>1) graph of each component   
 %   MComponents               Nc by 1 cell    (if Nc>1) M matrix of each component
 %   AComponents               Nc by 1 cell    (if Nc>1) A matrix of each component
-%   IExtBase                  Nis by 1        relative external current injected per island
+%   IExtBase                  Nn by 1         relative external current injected per node
 %   IExtBaseJ                 Nj by 1         MT*inv(M*MT)*IExtBase
 %   Ic                        (Nj or 1) by 1  critical current of junctions
 %   Rn                        (Nj or 1) by 1  normal state resistance of junctions
@@ -106,37 +106,37 @@ array.type = 'network';
 array.ndims = 2;
 
 %get array sizes
-Nis = size(islandPosition,1);
+Nn = size(nodePosition,1);
 junctionIsland1 = junctionIslands(:,1);
 junctionIsland2 = junctionIslands(:,2);
 Nj = length(junctionIsland1);
 
-%filter islands that are disconnected
-filtis = setdiff(1:Nis,unique([junctionIsland1;junctionIsland2]));
+%filter nodes that are disconnected
+filtis = setdiff(1:Nn,unique([junctionIsland1;junctionIsland2]));
 if ~isempty(filtis)
-    is = true(Nis,1);
+    is = true(Nn,1);
     is(filtis) = false;
     cis = cumsum(is); 
     junctionIsland1 = cis(junctionIsland1);
     junctionIsland2 = cis(junctionIsland2);
-    Nis = cis(end);
-    islandPosition = islandPosition(is,:);
+    Nn = cis(end);
+    nodePosition = nodePosition(is,:);
     IExtBase = IExtBase(is);
-    warning('some islands are disconnected, they are removed.') 
+    warning('some nodes are disconnected, they are removed.') 
 end
 
 %set array sizes
-array.Nis = Nis;
+array.Nn = Nn;
 array.Nj = Nj;
 
 %check input
-islandPosition = JJAsim_method_checkInput(islandPosition,'double',[Nis,2],[0,0],'islandPosition');
-if size(unique(round(islandPosition,10),'rows'),1) < size(islandPosition,1)
-    error('all islands must have distinct coordinates');
+nodePosition = JJAsim_method_checkInput(nodePosition,'double',[Nn,2],[0,0],'nodePosition');
+if size(unique(round(nodePosition,10),'rows'),1) < size(nodePosition,1)
+    error('all nodes must have distinct coordinates');
 end
 junctionIsland1 = JJAsim_method_checkInput(junctionIsland1,'matlabInt',Nj,0,'junctionIsland1');
 junctionIsland2 = JJAsim_method_checkInput(junctionIsland2,'matlabInt',Nj,0,'junctionIsland2');
-array.IExtBase = JJAsim_method_checkInput(IExtBase,'double',Nis,0,'IExtBase');
+array.IExtBase = JJAsim_method_checkInput(IExtBase,'double',Nn,0,'IExtBase');
 array.customcpQ = customcpQ;
 if customcpQ
     %build in check to see if cp and dcp are valid. 
@@ -177,22 +177,22 @@ for i = 1:Nj
 	Mijk(i,:) = [junctionIsland1(i),i,1];
 	Mijk(i+Nj,:) = [junctionIsland2(i),i,-1];
 end
-M = sparse(Mijk(:,1),Mijk(:,2),Mijk(:,3),Nis,Nj);
+M = sparse(Mijk(:,1),Mijk(:,2),Mijk(:,3),Nn,Nj);
 array.M = M;
 
-%make sure junctions dont start and end at the same island
+%make sure junctions dont start and end at the same node
 if sum(junctionIsland1 == junctionIsland2) > 0
-   error('junctions cannot start and end at the same island');
+   error('junctions cannot start and end at the same node');
 end
 
-%get island and junction coordinates
-array.islandPosition = islandPosition;
+%get node and junction coordinates
+array.nodePosition = nodePosition;
 array.junctionIsland1 = junctionIsland1;
 array.junctionIsland2 = junctionIsland2;
-juncis1x = islandPosition(junctionIsland1,1);
-juncis1y = islandPosition(junctionIsland1,2);
-juncis2x = islandPosition(junctionIsland2,1);
-juncis2y = islandPosition(junctionIsland2,2);
+juncis1x = nodePosition(junctionIsland1,1);
+juncis1y = nodePosition(junctionIsland1,2);
+juncis2x = nodePosition(junctionIsland2,1);
+juncis2y = nodePosition(junctionIsland2,2);
 array.junctionPosition = [juncis1x,juncis1y,juncis2x,juncis2y];
 
 %get graph of full network G
@@ -201,12 +201,12 @@ G = graph(edgeTable);
 array.networkGraph = G;
 
 %find connected components
-islandComponents = conncomp(G)';
-nrOfConnectedComponents = max(islandComponents);
+nodeComponents = conncomp(G)';
+nrOfConnectedComponents = max(nodeComponents);
 array.nrOfConnectedComponents = nrOfConnectedComponents;
 
 %get nr of paths (circuit rank)
-Np = Nj - Nis + nrOfConnectedComponents;
+Np = Nj - Nn + nrOfConnectedComponents;
 array.Np = Np;
 array.N = sqrt(Np);
 
@@ -219,7 +219,7 @@ networkGraphComponents = cell(nrOfConnectedComponents,1);
 
 %check if external current base adds up for each component
 for c = 1:nrOfConnectedComponents
-    if sum(array.IExtBase(islandComponents == c)) > 1E-10
+    if sum(array.IExtBase(nodeComponents == c)) > 1E-10
         error('IExtBase must add up to 0 for each network component');
     end
 end
@@ -232,7 +232,7 @@ cycleBaseEntries = 0;
 %compute all network components separately
 for c = 1:nrOfConnectedComponents
 
-    cIslands = islandComponents  == c;
+    cIslands = nodeComponents  == c;
     cJunctions = logical(abs(M)'*cIslands ~= 0);
     junctionComponents(cJunctions) = c;
     
@@ -247,10 +247,10 @@ for c = 1:nrOfConnectedComponents
     switch cycleAlgorithm
         case 'greedy'
             for j = 1:numedges(Gcomp)
-                islands = Gcomp.Edges.EndNodes(1,:);
+                nodes = Gcomp.Edges.EndNodes(1,:);
                 edgeNr = Gcomp.Edges.edgeNumbers(1);
                 Gcomp = rmedge(Gcomp,1);
-                path = shortestpath(Gcomp,islands(1),islands(2));
+                path = shortestpath(Gcomp,nodes(1),nodes(2));
                 if ~isempty(path)
                     pathEdges = findedge(Gcomp,path(1:end-1),path(2:end));
                     pathEdges = [edgeNr;Gcomp.Edges.edgeNumbers(pathEdges)];
@@ -291,7 +291,7 @@ end
 array.CComponentsReduced = CComponentsReduced;
 
 %get junction IExt base
-array.IExtBaseJ = M'*JJAsim_2D_network_method_CSolve(IExtBase,CComponentsReduced,islandComponents,nrOfConnectedComponents);
+array.IExtBaseJ = M'*JJAsim_2D_network_method_CSolve(IExtBase,CComponentsReduced,nodeComponents,nrOfConnectedComponents);
 
 %get all information about the paths
 pathNodes = cell(Np,1);
@@ -301,7 +301,7 @@ for np = 1:Np
     [pathNodes{np},pathDirection{np}] = JJAsim_2D_network_pathproperties([junctionIsland1(pJunc),junctionIsland2(pJunc)]);
 end
 
-%construct path area, centre and island positions
+%construct path area, centre and node positions
 pathArea = zeros(Np,1);
 pathCentroid = zeros(Np,2);
 pathPosition = cell(Np,1);
@@ -312,7 +312,7 @@ for np = 1:Np
     pDir = pathDirection{np};
     
     %calculate area and centroid
-    [parea,pcx,pcy] = JJAsim_2D_method_getpolygon(islandPosition(pNodes,1),islandPosition(pNodes,2));
+    [parea,pcx,pcy] = JJAsim_2D_method_getpolygon(nodePosition(pNodes,1),nodePosition(pNodes,2));
     
     %store area and centroid
     pathArea(np) = abs(parea);
@@ -325,8 +325,8 @@ for np = 1:Np
         pathDirection{np} = -flipud(pDir);
     end
 
-    %store island coordinates of paths 
-    pathPosition{np} = islandPosition(pathNodes{np},:);
+    %store node coordinates of paths 
+    pathPosition{np} = nodePosition(pathNodes{np},:);
 end
 array.pathNodes = pathNodes;
 array.pathJunctions = pathJunctions;
@@ -358,7 +358,7 @@ for c = 1:nrOfConnectedComponents
 end
 
 %if the number of connected components exceeds 1, store all related quantities.
-array.islandComponents = islandComponents;
+array.nodeComponents = nodeComponents;
 if nrOfConnectedComponents > 1
     array.junctionComponents = junctionComponents;
     array.pathComponents = pathComponents;

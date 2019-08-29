@@ -3,14 +3,14 @@ function array = JJAsim_2D_network_adjust(array,varargin)
 %
 %DESCRIPTION
 % Adjust physical properties of 2D electrical network of josephson junctions defined  
-% in array. Cannot add/remove islands or junctions.
+% in array. Cannot add/remove nodes or junctions.
 %
 %FIXED INPUT
 % array               struct            josephson junction array
 %
 %OPTIONAL INPUT
-% islandPosition   	  Nis by 2          (x,y) coordinates of the islands
-% IExtBase         	  Nis by 1          relative external current injected per island
+% nodePosition   	  Nn by 2          (x,y) coordinates of the nodes
+% IExtBase         	  Nn by 1           relative external current injected per node
 % customcpQ           1 by 1            true if custom current-phase relation cp
 % cp                  function_handle   custom current phase relation @(Ic,th) cp(Ic,th), 
 %                                       which must be 2pi periodic.
@@ -33,7 +33,7 @@ end
 
 %parse input
 inputParameters = {
-    'islandPosition'        []
+    'nodePosition'        []
     'IExtBase'              []
     'Ic'                    []
     'customcpQ'             []
@@ -46,7 +46,7 @@ inputParameters = {
     'betaL'                 []
     };
 options = JJAsim_method_parseOptions(inputParameters,varargin,mfilename);
-islandPosition = options.islandPosition;
+nodePosition = options.nodePosition;
 IExtBase = options.IExtBase;
 customcpQ = options.customcpQ;
 cp = options.cp;
@@ -58,7 +58,7 @@ Rn = options.Rn;
 betaC = options.betaC;
 betaL = options.betaL;
 
-Nis = array.Nis;
+Nn = array.Nn;
 Nj = array.Nj;
 Np = array.Np;
 Nc = array.nrOfConnectedComponents;
@@ -67,16 +67,16 @@ Nc = array.nrOfConnectedComponents;
 if ~isempty(IExtBase)
     
     %check IExtBase
-    array.IExtBase = JJAsim_method_checkInput(IExtBase,'double',Nis,0,'IExtBase');
+    array.IExtBase = JJAsim_method_checkInput(IExtBase,'double',Nn,0,'IExtBase');
     for c = 1:Nc
-        if sum(array.IExtBase(array.islandComponents == c)) > 1E-10
+        if sum(array.IExtBase(array.nodeComponents == c)) > 1E-10
             error('IExtBase must add up to 0 for each network component');
         end
     end
     
     %adjust junction IExt base
     Cred = array.CComponentsReduced;
-    iscomp = array.islandComponents;
+    iscomp = array.nodeComponents;
     array.IExtBaseJ = array.M'*JJAsim_2D_network_method_CSolve(IExtBase,Cred,iscomp,Nc);
 end
 
@@ -152,21 +152,21 @@ if ~isempty(betaC)
     end
 end
 
-%check islandPosition input
-if ~isempty(islandPosition)
-    array.islandPosition = JJAsim_method_checkInput(islandPosition,'double',[Nis,2],[0,0],'islandPosition');
-    if size(unique(round(array.islandPosition,10),'rows'),1) < size(array.islandPosition,1)
-        error('all islands must have distinct coordinates');
+%check nodePosition input
+if ~isempty(nodePosition)
+    array.nodePosition = JJAsim_method_checkInput(nodePosition,'double',[Nn,2],[0,0],'nodePosition');
+    if size(unique(round(array.nodePosition,10),'rows'),1) < size(array.nodePosition,1)
+        error('all nodes must have distinct coordinates');
     end
     
     %adjust junctionPosition
-    juncis1x = array.islandPosition(array.junctionIsland1,1);
-    juncis1y = array.islandPosition(array.junctionIsland1,2);
-    juncis2x = array.islandPosition(array.junctionIsland2,1);
-    juncis2y = array.islandPosition(array.junctionIsland2,2);
+    juncis1x = array.nodePosition(array.junctionIsland1,1);
+    juncis1y = array.nodePosition(array.junctionIsland1,2);
+    juncis2x = array.nodePosition(array.junctionIsland2,1);
+    juncis2y = array.nodePosition(array.junctionIsland2,2);
     array.junctionPosition = [juncis1x,juncis1y,juncis2x,juncis2y];
     
-    %adjust path area, centre and island positions
+    %adjust path area, centre and node positions
     pathArea = zeros(Np,1);
     pathCentroid = zeros(Np,2);
     pathPosition = cell(Np,1);
@@ -180,7 +180,7 @@ if ~isempty(islandPosition)
         pDir = pathDirection{np};
         
         %calculate area and centroid
-        [parea,pcx,pcy] = JJAsim_2D_method_getpolygon(array.islandPosition(pNodes,1),array.islandPosition(pNodes,2));
+        [parea,pcx,pcy] = JJAsim_2D_method_getpolygon(array.nodePosition(pNodes,1),array.nodePosition(pNodes,2));
         
         %store area and centroid
         pathArea(np) = abs(parea);
@@ -193,8 +193,8 @@ if ~isempty(islandPosition)
             pathDirection{np} = -flipud(pDir);
         end
         
-        %store island coordinates of paths
-        pathPosition{np} = array.islandPosition(pathNodes{np},:);
+        %store node coordinates of paths
+        pathPosition{np} = array.nodePosition(pathNodes{np},:);
     end
     array.pathNodes = pathNodes;
     array.pathJunctions = pathJunctions;

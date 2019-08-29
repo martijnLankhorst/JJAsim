@@ -6,10 +6,10 @@ function array = JJAsim_2D_network_square(Nx,Ny,ax,ay,currentDirection,varargin)
 % JJAsim_2D_network_create.
 %
 %FIXED INPUT
-% Nx                1 by 1   number of islands in x-direction
-% Ny                1 by 1   number of islands in y-direction
-% ax                1 by 1   island distance in x-direction
-% ay                1 by 1   island distance in y-direction
+% Nx                1 by 1   number of nodes in x-direction
+% Ny                1 by 1   number of nodes in y-direction
+% ax                1 by 1   node distance in x-direction
+% ay                1 by 1   node distance in y-direction
 % currentDirection  string   'x' or 'y'. Sets a homogeneous external 
 %                            current in the respective  dimension.
 %                           
@@ -36,7 +36,7 @@ xnr = repmat((1:Nx)',1,Ny);
 ynr = repmat((1:Ny),Nx,1);
 x = (xnr-1)*ax;
 y = (ynr-1)*ay;
-islandPosition = [reshape(x,[],1),reshape(y,[],1)];
+nodePosition = [reshape(x,[],1),reshape(y,[],1)];
 
 jc = [1,1,2,1;1,1,1,2];
 jcs = zeros(2*Nx*Ny,4);
@@ -64,5 +64,5 @@ switch currentDirection
     otherwise
         error('unrecognized direction');
 end
-array = JJAsim_2D_network_create(islandPosition,[junctionIsland1,junctionIsland2],IExtBase,varargin{:});
+array = JJAsim_2D_network_create(nodePosition,[junctionIsland1,junctionIsland2],IExtBase,varargin{:});
 end

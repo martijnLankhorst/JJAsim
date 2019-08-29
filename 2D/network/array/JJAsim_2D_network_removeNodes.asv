@@ -1,37 +1,43 @@
-function [array,newJunctionNrs] = JJAsim_2D_network_removeJunctions(array,junctionNrs)
-%array = JJAsim_2D_network_removeJunctions(array,junctionNrs)
+function [array,newNodeNrs,newJunctionNrs] = JJAsim_2D_network_removeNodes(array,nodeNrs)
+%array = JJAsim_2D_network_removeIslands(array,nodeNrs)
 %
 %DESCRIPTION
-% remove junctions from an existing 2D network of josephson junctions.
+% remove nodes from an existing 2D network of josephson junctions.
 %
 %FIXED INPUT
-% array           struct            josephson junction array
-% junctionNrs     N by 1            list of junction numbers to remove.
+% array             struct            josephson junction array
+% nodeNrs           N by 1            list of node numbers to remove.
 %
 %OUTPUT
-% array           struct            adjusted array
-% newJunctionNrs  Nj by 1           Lists for all original junctions what new number 
-%                                   is assigned to it. 0 if removed.
+% array             struct            adjusted array
+% newNodeNrs        Nn by 1           Lists for all original nodes what new number is
+%                                     assigned to it. 0 if removed.
+% newJunctionNrs    Nj by 1           Lists for all original junctions what new number is
+%                                     assigned to it. 0 if removed.
 
 %check if the array struct corresponds to that of a 2D network with free boundaries.
 if ~(strcmp(array.type,'network') && array.ndims == 2)
    error('array not a 2D network'); 
 end
 
-%remove junctions
-nodePosition = array.nodePosition;
-ind = true(array.Nj,1);
-ind(junctionNrs) = false;
-junctionIsland1 = array.junctionIsland1(ind);
-junctionIsland2 = array.junctionIsland2(ind);
-Nj = length(junctionIsland1);
-Nn = array.Nn;
-IExtBase = array.IExtBase;
+%remove nodes and junctions
+nodes = true(array.Nn,1);
+nodes(nodeNrs) = false;
+cnodes = cumsum(nodes);
+newNodeNrs = zeros(array.Nn,1);
 
-%get new junction numbers
+newNodeNrs(nodes) = cnodes(nodes);
+nodePosition = array.nodePosition(nodes,:);
+j1 = array.junctionIsland1;
+j2 = array.junctionIsland2;
+ind = nodes(j1) & nodes(j2);
 newJunctionNrs = zeros(array.Nj,1);
-cjuncs = cumsum(ind);
-newJunctionNrs(ind) = cjuncs(ind);
+newJunctionNrs(ind) = cumsum(ind);
+junctionIsland1 = cnodes(j1(ind));
+junctionIsland2 = cnodes(j2(ind));
+IExtBase = array.IExtBase(nodes);
+Nn = sum(nodes);
+Nj = length(junctionIsland1);
 
 %filter nodes that are disconnected
 filtis = setdiff(1:Nn,unique([junctionIsland1;junctionIsland2]));
@@ -52,8 +58,8 @@ array.Nn = Nn;
 array.Nj = Nj;
 
 %contract physical parameters
-if ~array.IcCompactQ
-   array.Ic = array.Ic(ind);
+if ~array.IcCompactQ(1)
+   array.Ic = array.Ic(ind,:);
 end
 if ~array.RnCompactQ
     array.Rn = array.Rn(ind);
@@ -96,7 +102,11 @@ array.networkGraph = G;
 
 %find connected components
 nodeComponents = conncomp(G)';
-nrOfConnectedComponents = max(nodeComponents);
+if Nn > 0
+    nrOfConnectedComponents = max(nodeComponents);
+else
+    nrOfConnectedComponents = 0;
+end
 array.nrOfConnectedComponents = nrOfConnectedComponents;
 
 %get nr of paths (circuit rank)
@@ -269,10 +279,10 @@ else
         IExtBase(pind) = 0;
     end
 end
-if zeroFlag
+if zeroFlag && ~rescaleFlag
    warning('Some IExtBase entries are set to zero') 
 end
-if rescaleFlag
+if rescaleFlag && ~zeroFlag
    warning('Some IExtBase entries are rescaled') 
 end
 if rescaleFlag && zeroFlag
@@ -282,5 +292,6 @@ array.IExtBase = IExtBase;
 
 %get junction IExt base
 array.IExtBaseJ = M'*JJAsim_2D_network_method_CSolve(IExtBase,CComponentsReduced,nodeComponents,nrOfConnectedComponents);
+
 
 end
