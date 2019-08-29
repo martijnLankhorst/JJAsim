@@ -1,17 +1,17 @@
-function [fh,ah,cb] = JJAsim_priv_snap_2D(islandPosition,junctionPosition,pathCentroid,...
+function [fh,ah,cb] = JJAsim_priv_snap_2D(nodePosition,junctionPosition,pathCentroid,...
     pathPosition,n,I,figurePosition,fontSize,fontName,showVorticesQ,vortexDiameter,...
     vortexColor,antiVortexColor,vortexType,showGridQ,gridWidth,gridColor,showCurrentQ,arrowWidth,...
     arrowLength,arrowColor,arrowType,...
-    showIslandsQ,islandDiameter,islandColor,showIslandQuantityQ,islandQuantity,...
-    islandColorLimits,islandQuantityLabel,showPathQuantityQ,pathQuantity,...
+    showIslandsQ,nodeDiameter,nodeColor,showIslandQuantityQ,nodeQuantity,...
+    nodeColorLimits,nodeQuantityLabel,showPathQuantityQ,pathQuantity,...
     pathColorLimits,pathQuantityLabel,pathQuantityAlpha,showIExtBaseQ,IExtBase,...
     IExtBaseColor)
 
 %get coordinates
 xCicle = cos(linspace(0,2*pi,20));
 yCicle = sin(linspace(0,2*pi,20));
-X = islandPosition(:,1);
-Y = islandPosition(:,2);
+X = nodePosition(:,1);
+Y = nodePosition(:,2);
 X1 = junctionPosition(:,1);
 Y1 = junctionPosition(:,2);
 X2 = junctionPosition(:,3);
@@ -60,34 +60,34 @@ if showPathQuantityQ
     patch(cx',cy',pathQuantity','EdgeColor','none','FaceAlpha',pathQuantityAlpha);
 end
 
-%plot islands
+%plot nodes
 if showIslandsQ
     
-    %island circles
+    %node circles
     if showIslandQuantityQ
-        patch((X + xCicle*islandDiameter/2)',(Y + yCicle*islandDiameter/2)',...
-            islandQuantity','EdgeColor',[0,0,0]);
+        patch((X + xCicle*nodeDiameter/2)',(Y + yCicle*nodeDiameter/2)',...
+            nodeQuantity','EdgeColor',[0,0,0]);
     else
-        patch((X + xCicle*islandDiameter/2)',(Y + yCicle*islandDiameter/2)',...
-            islandColor,'EdgeColor',[0,0,0]);
+        patch((X + xCicle*nodeDiameter/2)',(Y + yCicle*nodeDiameter/2)',...
+            nodeColor,'EdgeColor',[0,0,0]);
     end
     
     %plot IExtBase symbols
     if showIExtBaseQ
         ind = IExtBase < 0;
-        plot((X(ind)+[-1,1]*islandDiameter/4)',(Y(ind)+[-1,1]*islandDiameter/4)',...
+        plot((X(ind)+[-1,1]*nodeDiameter/4)',(Y(ind)+[-1,1]*nodeDiameter/4)',...
             'Color',IExtBaseColor,'LineWidth',1);
-        plot((X(ind)+[-1,1]*islandDiameter/4)',(Y(ind)+[1,-1]*islandDiameter/4)',...
+        plot((X(ind)+[-1,1]*nodeDiameter/4)',(Y(ind)+[1,-1]*nodeDiameter/4)',...
             'Color',IExtBaseColor,'LineWidth',1);
         ind = IExtBase > 0;
-        patch((X(ind) + xCicle*islandDiameter/6)',(Y(ind) + yCicle*islandDiameter/6)',...
+        patch((X(ind) + xCicle*nodeDiameter/6)',(Y(ind) + yCicle*nodeDiameter/6)',...
             IExtBaseColor,'EdgeColor',IExtBaseColor);
     end
 end
 
 %plot junctions
 if showCurrentQ
-    [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],reshape(I,[],1),islandDiameter*1.05,arrowLength);
+    [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],reshape(I,[],1),nodeDiameter*1.05,arrowLength);
     switch arrowType
         case 'normal'
             quiver(x,y,u,v,'LineWidth',arrowWidth,'Color',arrowColor,'AutoScale','off');
@@ -147,8 +147,8 @@ if showVorticesQ
 end
 
 %get plot limits
-xlims = [min([X;X1;X2]) - islandDiameter,max([X;X1;X2]) + islandDiameter];
-ylims = [min([Y;Y1;Y2]) - islandDiameter,max([Y;Y1;Y2]) + islandDiameter];
+xlims = [min([X;X1;X2]) - nodeDiameter,max([X;X1;X2]) + nodeDiameter];
+ylims = [min([Y;Y1;Y2]) - nodeDiameter,max([Y;Y1;Y2]) + nodeDiameter];
 xlim(xlims)
 ylim(ylims)
 ah.DataAspectRatio = [1,1,1];
@@ -162,14 +162,14 @@ if showIslandQuantityQ || showPathQuantityQ
     
     %define color limits
     if showIslandQuantityQ
-        lab = islandQuantityLabel;
-        if isempty(islandColorLimits)
-            islandColorLimits = [min(islandQuantity),max(islandQuantity)];
+        lab = nodeQuantityLabel;
+        if isempty(nodeColorLimits)
+            nodeColorLimits = [min(nodeQuantity),max(nodeQuantity)];
         end
-        if islandColorLimits(1) == islandColorLimits(2)
-            islandColorLimits = islandColorLimits + [-0.5,0.5];
+        if nodeColorLimits(1) == nodeColorLimits(2)
+            nodeColorLimits = nodeColorLimits + [-0.5,0.5];
         end
-        ah.CLim = islandColorLimits;
+        ah.CLim = nodeColorLimits;
     end
     if showPathQuantityQ
         lab = pathQuantityLabel;

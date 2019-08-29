@@ -1,17 +1,17 @@
-function JJAsim_priv_movie_2D(islandPosition,junctionPosition,pathCentroid,pathPosition,...
+function JJAsim_priv_movie_2D(nodePosition,junctionPosition,pathCentroid,pathPosition,...
     t,selectedTimePoints,n,I,figurePosition,fontSize,fontName,showVorticesQ,vortexDiameter,...
     vortexColor,antiVortexColor,vortexType,showGridQ,gridWidth,gridColor,showCurrentQ,...
     arrowWidth,arrowLength,arrowColor,...
-    arrowType,showIslandsQ,islandDiameter,islandColor,showIslandQuantityQ,islandQuantity,...
-    islandColorLimits,islandQuantityLabel,showPathQuantityQ,pathQuantity,pathColorLimits,...
+    arrowType,showIslandsQ,nodeDiameter,nodeColor,showIslandQuantityQ,nodeQuantity,...
+    nodeColorLimits,nodeQuantityLabel,showPathQuantityQ,pathQuantity,pathColorLimits,...
     pathQuantityLabel,pathQuantityAlpha,showIExtBaseQ,IExtBase,IExtBaseColor,framePause,...
     saveQ,filename,framerate,compression)
 
 %get coordinates
 xCicle = cos(linspace(0,2*pi,20));
 yCicle = sin(linspace(0,2*pi,20));
-X = islandPosition(:,1);
-Y = islandPosition(:,2);
+X = nodePosition(:,1);
+Y = nodePosition(:,2);
 X1 = junctionPosition(:,1);
 Y1 = junctionPosition(:,2);
 X2 = junctionPosition(:,3);
@@ -61,34 +61,34 @@ if showPathQuantityQ
         'FaceAlpha',pathQuantityAlpha);
 end
 
-%plot islands first timestep
+%plot nodes first timestep
 if showIslandsQ
     
-    %island circles
+    %node circles
     if showIslandQuantityQ
-        isHandle = patch((X + xCicle*islandDiameter/2)',(Y + yCicle*islandDiameter/2)',...
-            islandQuantity(:,1)','EdgeColor',[0,0,0]);
+        isHandle = patch((X + xCicle*nodeDiameter/2)',(Y + yCicle*nodeDiameter/2)',...
+            nodeQuantity(:,1)','EdgeColor',[0,0,0]);
     else
-        isHandle = patch((X + xCicle*islandDiameter/2)',(Y + yCicle*islandDiameter/2)',...
-            islandColor,'EdgeColor',[0,0,0]);
+        isHandle = patch((X + xCicle*nodeDiameter/2)',(Y + yCicle*nodeDiameter/2)',...
+            nodeColor,'EdgeColor',[0,0,0]);
     end
     
     %plot IExtBase symbols
     if showIExtBaseQ
         ind = IExtBase < 0;
-        plot((X(ind)+[-1,1]*islandDiameter/4)',(Y(ind)+[-1,1]*islandDiameter/4)',...
+        plot((X(ind)+[-1,1]*nodeDiameter/4)',(Y(ind)+[-1,1]*nodeDiameter/4)',...
             'Color',IExtBaseColor,'LineWidth',1);
-        plot((X(ind)+[-1,1]*islandDiameter/4)',(Y(ind)+[1,-1]*islandDiameter/4)',...
+        plot((X(ind)+[-1,1]*nodeDiameter/4)',(Y(ind)+[1,-1]*nodeDiameter/4)',...
             'Color',IExtBaseColor,'LineWidth',1);
         ind = IExtBase > 0;
-        patch((X(ind) + xCicle*islandDiameter/6)',(Y(ind) + yCicle*islandDiameter/6)',...
+        patch((X(ind) + xCicle*nodeDiameter/6)',(Y(ind) + yCicle*nodeDiameter/6)',...
             IExtBaseColor,'EdgeColor',IExtBaseColor);
     end
 end
 
 %plot junctions
 if showCurrentQ
-    [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],reshape(I(:,1),[],1),islandDiameter*1.05,arrowLength);
+    [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],reshape(I(:,1),[],1),nodeDiameter*1.05,arrowLength);
     switch arrowType
         case 'normal'
             juncHandle = quiver(x,y,u,v,'LineWidth',arrowWidth,'Color',arrowColor,'AutoScale','off');
@@ -153,8 +153,8 @@ if showVorticesQ
 end
 
 %get plot limits
-xlims = [min(min([X;X1;X2])) - islandDiameter,max(max([X;X1;X2])) + islandDiameter];
-ylims = [min(min([Y;Y1;Y2])) - islandDiameter,max(max([Y;Y1;Y2])) + islandDiameter];
+xlims = [min(min([X;X1;X2])) - nodeDiameter,max(max([X;X1;X2])) + nodeDiameter];
+ylims = [min(min([Y;Y1;Y2])) - nodeDiameter,max(max([Y;Y1;Y2])) + nodeDiameter];
 xlim(xlims)
 ylim(ylims)
 ah.DataAspectRatio = [1,1,1];
@@ -168,11 +168,11 @@ if showIslandQuantityQ || showPathQuantityQ
     
     %define color limits
     if showIslandQuantityQ
-        lab = islandQuantityLabel;
-    if isempty(islandColorLimits)
-        islandColorLimits = [min(min(islandQuantity)),max(max(islandQuantity))];
+        lab = nodeQuantityLabel;
+    if isempty(nodeColorLimits)
+        nodeColorLimits = [min(min(nodeQuantity)),max(max(nodeQuantity))];
     end
-    ah.CLim = islandColorLimits;
+    ah.CLim = nodeColorLimits;
     end
     if showPathQuantityQ
         lab = pathQuantityLabel;
@@ -227,14 +227,14 @@ for i = 2:length(t)
             pathQuantHandle.CData = pathQuantity(:,i);
         end
         
-        %update island quantity
+        %update node quantity
         if showIslandQuantityQ
-            isHandle.CData = islandQuantity(:,i);
+            isHandle.CData = nodeQuantity(:,i);
         end
         
         %update currents
         if showCurrentQ
-            [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],I(:,i),islandDiameter*1.05,arrowLength);
+            [x,y,u,v] = JJAsim_priv_arrows_2D([X1,Y1,X2,Y2],I(:,i),nodeDiameter*1.05,arrowLength);
             switch arrowType
                 case 'normal'
                     juncHandle.XData = x;
