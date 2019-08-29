@@ -1,14 +1,14 @@
 function [thOut,IOut,VOut,VtotOut,EOut] = JJAsim_2D_network_simulate_priv_noscr_nocap_CPU(...
-    Nis,Nj,Np,M,A,W,IExtBaseJ,IExtBaseTotal,pathArea,areaCompact,Nt,t,IExt,IExtCompact,...
+    Nn,Nj,Np,M,A,W,IExtBaseJ,IExtBaseTotal,pathArea,areaCompact,Nt,t,IExt,IExtCompact,...
     IExtprob,WIExt,T,TCompact,Tprob,WT,f,fCompact,fprob,Wf,z,zCompact,zprob,Wz,ic,icprob,Wic,Ic,...
     IcCompact,cpQ,cp,icp,Rn,RnCompact,storethQ,thTimePoints,Ntth,storeIQ,ITimePoints,NtI,storeVQ,...
     VTimePoints,NtV,storeVtotQ,VtotTimePoints,NtVtot,storeEQ,ETimePoints,NtE) %#ok<*INUSL>
 
 %input:
-% Nis               1 by 1            	number of islands
+% Nn               1 by 1            	number of nodes
 % Nj                1 by 1            	number of junctions
 % Np                1 by 1             	number of paths
-% M                 Nis by Nj        	Kirchhoffs current rules
+% M                 Nn by Nj        	Kirchhoffs current rules
 % A                 Np by Nj           	Kirchhoffs voltage rules
 % W                 1 by 1            	number of parallel problems
 % IExtBaseJ         Nj by 1             Junction external current base
