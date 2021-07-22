@@ -1,5 +1,6 @@
 close all; 
-% - magnetoresistance curves for several bias currents
+% - Shapiro steps with two different AC amplitudes. Step height in normalized units
+%   is freq * (horizontal nr of junctions) = 0.25 * 20 = 5
 
 %array size
 Nx = 21;                
